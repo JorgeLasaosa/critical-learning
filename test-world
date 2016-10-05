@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 
-from world import world, object, box, robot
+from world import world, box, robot
 
 world = world(5, 5)
 box1 = box(2, 2)
 robot = robot(3, 3, 1)
 
+
 world.addObject(box1)
 world.addObject(robot)
+
+robot.updateSensors()
+print robot.sensors
 
 print world.M
