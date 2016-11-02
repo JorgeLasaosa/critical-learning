@@ -10,8 +10,11 @@ class object:
 		self.coords = coords
 		self.pushable = pushable
 		self.world = None
+		
+	def addtoWorld(self, world):
+		self.world = world
 			
-# Define a box which occupies a square in the map
+# Define a box which occupies a square in the world
 # 	(i, j) : position
 			
 class box(object):
@@ -19,30 +22,35 @@ class box(object):
 		object.__init__(self, coords, 1, pushable)
 
 
-# Define a robot which occupies a square in the map
+# Define a robot which occupies a square in the world
 #	(i, j)	: position
 #	d 		: distance vision
 		
 class robot(object):
-	def __init__(self, coords, d):
+	def __init__(self, coords=(0,0), d=1):
 		object.__init__(self, coords, 2)
 		self.d = d
+		self.sensors = -np.ones(4)
 	
 	# Move the robot 1 square UP in the world
 	def move1UP(self):
 		self.world.updateObjectPosition(self, tuple(np.add(self.coords, (-1,0))))
+		self.updateSensors()
 	
 	# Move the robot 1 square DOWN in the world
 	def move1DOWN(self):
 		self.world.updateObjectPosition(self, tuple(np.add(self.coords, (1,0))))
+		self.updateSensors()
 	
 	# Move the robot 1 square LEFT in the world
 	def move1LEFT(self):
 		self.world.updateObjectPosition(self, tuple(np.add(self.coords, (0,-1))))
+		self.updateSensors()
 	
 	# Move the robot 1 square RIGHT in the world
 	def move1RIGHT(self):
 		self.world.updateObjectPosition(self, tuple(np.add(self.coords, (0,1))))
+		self.updateSensors()
 	
 	# Array sensors contains the output of the 4 robot's sensors (1 on, -1 off)
 	# 	sensors[0] : Top sensor
@@ -60,7 +68,12 @@ class robot(object):
 				self.sensors[2] = 1
 			elif self.coords[1]<self.world.nCols-1 and self.world.M[tuple(np.add(self.coords, (0,v)))] is not None:
 				self.sensors[3] = 1
-			
+	
+	# Overrides addtoWorld
+	def addtoWorld(self, world):
+		object.addtoWorld(self, world)
+		self.updateSensors()
+		
 								
 											
 # Define a 2D world nRows x nCols
@@ -72,13 +85,13 @@ class world:
 	
 	# Place an object in the world
 	def addObject(self, obj):
-		obj.coords = (obj.coords[0] % self.nRows, obj.coords[1] % self.nCols)
+		obj.coords = tuple(np.array(obj.coords) % np.array((self.nRows,self.nCols)))
 		self.M[obj.coords] = obj
-		obj.world = self
+		obj.addtoWorld(self)
 	
 	# Update the position of an object int he world
 	def updateObjectPosition(self, obj, newCoords):
-		newCoords = (newCoords[0] % self.nRows, newCoords[1] % self.nCols)
+		newCoords = tuple(np.array(newCoords) % np.array((self.nRows,self.nCols)))
 		newSquare = self.M[newCoords]		# Object placed at new square
 		if newSquare is None:
 			self.M[obj.coords] = None
@@ -87,7 +100,7 @@ class world:
 		elif newSquare.pushable:
 		# Push the object and take the square	
 			push = tuple(np.subtract(newSquare.coords, obj.coords))
-			newSquare.coords = tuple(np.add(newSquare.coords,push))
+			newSquare.coords = tuple(np.array(np.add(newSquare.coords,push)) % np.array((self.nRows,self.nCols)))
 			self.M[newSquare.coords] = newSquare
 			self.M[newCoords] = obj
 			self.M[obj.coords] = None

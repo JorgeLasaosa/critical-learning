@@ -1,15 +1,18 @@
 import numpy as np
+from world import robot
 from itertools import combinations
 import matplotlib.pyplot as plt
 
 class ising:
-	def __init__(self, netsize):	#Create ising model
 	
+	def __init__(self, netsize, robot=None):	#Create ising model
 		self.size=netsize
 		self.h=np.zeros(netsize)
 		self.J=np.zeros((netsize,netsize))
 		self.randomize_state()
 		self.Beta=1
+		self.K = np.append(np.diag([1,1,1,1]), np.zeros((netsize-4,4)), axis=0)
+		self.robot = robot
 	
 	def randomize_state(self):
 		self.s = np.random.randint(0,2,self.size)*2-1
@@ -174,6 +177,17 @@ class ising:
 		samples=[]
 		for t in range(T):
 			self.SequentialGlauberStep()
+			### Ejecutar 1 paso del robot
+			move = tuple((self.s[self.size-2], self.s[self.size-1]))
+			if move == (-1,-1):
+				self.robot.move1DOWN()
+			elif move == (-1,1):
+				self.robot.move1LEFT()
+			elif move == (1,-1):
+				self.robot.move1RIGHT()
+			elif move == (1,1):
+				self.robot.move1UP()
+			###
 			n=bool2int((self.s+1)/2)
 			H= self.h + np.dot(self.s,self.J)+ np.dot(self.J,self.s)
 			F = H*np.tanh(H)-np.log(2*np.cosh(H))
@@ -245,7 +259,7 @@ class ising:
 	def GlauberStep(self,i=None):			#Execute step of Glauber algorithm
 		if i is None:
 			i = np.random.randint(self.size)
-		eDiff = self.deltaE(i)
+		eDiff = self.deltaE(i) 
 		if np.random.rand(1) < 1.0/(1.0+np.exp(eDiff)):    # Glauber
 			self.s[i] = -self.s[i]
 			
@@ -255,8 +269,10 @@ class ising:
 
 
 	def deltaE(self,i):		#Compute energy difference between two states with a flip of spin i
-		return 2*(self.s[i]*self.h[i] + np.sum(self.s[i]*(self.J[i,:]*self.s)+self.s[i]*(self.J[:,i]*self.s)))
- 
+		if self.robot is None:
+			return 2*(self.s[i]*self.h[i] + np.sum(self.s[i]*(self.J[i,:]*self.s)+self.s[i]*(self.J[:,i]*self.s)))
+		else:
+			return 2*(self.s[i]*self.h[i] + np.sum(self.s[i]*(self.J[i,:]*self.s)+self.s[i]*(self.J[:,i]*self.s))) + np.sum(self.K[i,:] * self.robot.sensors)
 			
 				
 	def metastable_states(self):	#Find the metastable states of the system
