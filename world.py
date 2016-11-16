@@ -60,13 +60,13 @@ class robot(object):
 	def updateSensors(self):
 		self.sensors = -np.ones(4)
 		for v in range(1, self.d+1):
-			if self.coords[0]>0 and self.world.M[tuple(np.add(self.coords, (-v,0)))] is not None:
+			if self.coords[0]>0 and self.world.M[tuple(np.mod(np.add(self.coords, (-v,0)), (self.world.nRows,self.world.nCols)))] is not None:
 				self.sensors[0] = 1
-			elif self.coords[0]<self.world.nRows-1 and self.world.M[tuple(np.add(self.coords, (v,0)))] is not None:
+			elif self.coords[0]<self.world.nRows-1 and self.world.M[tuple(np.mod(np.add(self.coords, (v,0)), (self.world.nRows,self.world.nCols)))] is not None:
 				self.sensors[1] = 1
-			elif self.coords[1]>0 and self.world.M[tuple(np.add(self.coords, (0,-v)))] is not None:
+			elif self.coords[1]>0 and self.world.M[tuple(np.mod(np.add(self.coords, (0,-v)), (self.world.nRows,self.world.nCols)))] is not None:
 				self.sensors[2] = 1
-			elif self.coords[1]<self.world.nCols-1 and self.world.M[tuple(np.add(self.coords, (0,v)))] is not None:
+			elif self.coords[1]<self.world.nCols-1 and self.world.M[tuple(np.mod(np.add(self.coords, (0,v)), (self.world.nRows,self.world.nCols)))] is not None:
 				self.sensors[3] = 1
 	
 	# Overrides addtoWorld

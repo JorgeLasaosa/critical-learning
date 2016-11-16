@@ -4,20 +4,15 @@ from ising import ising
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 world = world(7, 7)
 box1 = box((3,3), False)
-robot = robot((3,4), 1)
+robot = robot((0,0), 1)
 
 world.addObject(box1)
 world.addObject(robot)
 
-print robot.sensors
 
-print world.M
-
-exit()
-
-########################################################################
 size=10
 
 
@@ -32,8 +27,8 @@ T1=10000
 X=np.zeros((size,T1))
 
 x.randomize_state()
-print x.s
 
+# TRAINING
 x.HC=0
 
 for rep in range(steps):
@@ -41,44 +36,67 @@ for rep in range(steps):
 	if rep%1==0:
 		print rep, x.HC
 
+# MOVEMENT
 footprints = np.zeros((world.nRows, world.nCols))
 world.updateObjectPosition(robot, (0,0))
+plots = []
 
+curr_pos = 0
+
+movements = np.zeros(4)
 for t in range(T1):
 		x.SequentialGlauberStep()
 		#~ X[:,t]=x.s
 		move = tuple((x.s[size-2], x.s[size-1]))
 		if move == (-1,-1):
 			robot.move1DOWN()
+			movements[0] += 1
 		elif move == (-1,1):
 			robot.move1LEFT()
+			movements[1] += 1
 		elif move == (1,-1):
 			robot.move1RIGHT()
+			movements[2] += 1
 		elif move == (1,1):
 			robot.move1UP()
+			movements[3] += 1
 			
 		footprints[robot.coords] += 1
+		plots.append(robot.coords)
 
-print footprints
+print "Num. de movimientos hacia abajo: %d" % movements[0]
+print "Num. de movimientos hacia la izquierda: %d" % movements[1]
+print "Num. de movimientos hacia la derecha: %d" % movements[2]
+print "Num. de movimientos hacia arriba: %d" % movements[3]
 
-plt.figure()
+
+# Plot a colormap of footprints and the movements (use right and left arrows
+# to navigate)
+
+# Detect right and left arrows to navigate between plots
+def key_event(e):
+    global curr_pos
+
+    if e.key == "right":
+        curr_pos = curr_pos + 1
+    elif e.key == "left":
+        curr_pos = curr_pos - 1
+    else:
+        return
+    curr_pos = curr_pos % len(plots)
+    ax.cla()
+    ax.plot(plots[curr_pos][1], plots[curr_pos][0], 'ro')
+    plt.imshow(footprints,interpolation='nearest')
+    fig.canvas.draw()
+    
+fig = plt.figure()
+fig.canvas.mpl_connect('key_press_event', key_event)
 plt.imshow(footprints,interpolation='nearest')
 plt.colorbar()
+ax = fig.add_subplot(111)
+ax.plot(plots[0][1], plots[0][0], 'ro')
 plt.title('Footprints')
 
 plt.show()
 
 exit()
-
-########################################################################
-
-#~ robot.move1LEFT()
-#~ robot.move1UP()
-#~ robot.move1UP()
-#~ robot.move1UP()
-#~ robot.move1DOWN()
-
-#~ robot.updateSensors()
-#~ print robot.sensors
-
-#~ print world.M
