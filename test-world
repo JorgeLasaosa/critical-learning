@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-world = world(7, 7)
+world = world(7, 7, False)
 box1 = box((3,3), False)
-robot = robot((0,0), 1)
+robot = robot((0,0), 3)
 
 world.addObject(box1)
 world.addObject(robot)
